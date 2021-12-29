@@ -1,0 +1,19 @@
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+prompt = no
+
+[req_distinguished_name]
+CN = {{ USER_NAME }}
+O = {{ USER_DEPARTAMENT }}
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = {{ USER_NAME }}
+DNS.2 = {{ USER_NAME }}.{{ USER_DEPARTAMENT }}
+DNS.3 = {{ USER_NAME }}.{{ USER_DEPARTAMENT }}.{{ CLUSTER_NAME }}
