@@ -7,8 +7,8 @@ spec:
   - system:authenticated
   # request: $(cat {{ USER_NAME }}.csr | base64 | tr -d '\n')
   request: {{ BASE64_CSR }}
-  signerName: kubernetes.io/kubelet-serving
+  signerName: kubernetes.io/kube-apiserver-client
   usages:
   - digital signature
   - key encipherment
-  - server auth
+  - client auth
