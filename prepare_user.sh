@@ -2,7 +2,7 @@
 
 # Prepare kubernetes config for new user
 #
-# USING:   ./prepare_user.sh $USER_NAME $USER_DEPARTAMENT
+# USING:   ./prepare_user.sh $USER_NAME $USER_DEPARTAMENT [$KEY_PATH]
 # EXAMPLE: ./prepare_user.sh geytsbills management
 
 if [ -z "$1" ] || [ -z "$2" ]
@@ -22,7 +22,7 @@ mkdir -p ${USER_NAME}
 # gen key
 if [ -z "$3" ]
 then
-    echo "KEY_PATH not set. Generating user key for CURRENT user..."
+    echo "KEY_PATH not set. Generating new user key..."
     openssl genrsa -out ${USER_NAME}/${USER_NAME}.key 2048
     export KEY_PATH=${USER_NAME}/${USER_NAME}.key
 fi
@@ -31,12 +31,7 @@ echo "\nGenerating CSR..."
 j2 templates/username_csr.cnf.j2 > ${USER_NAME}/${USER_NAME}_csr.cnf
 
 # gen csr
-# openssl req -new -key ${USER_NAME}/${USER_NAME}.key -subj "/CN=system:node:${USER_NAME} /OU="system:nodes" /O=system:nodes" -config ${USER_NAME}/${USER_NAME}_csr.cnf -out ${USER_NAME}/${USER_NAME}.csr
-# openssl req -new -key ${KEY_PATH} -subj "/CN=system:node:${USER_NAME}/OU="system:nodes"/O=system:nodes" -config ${USER_NAME}/${USER_NAME}_csr.cnf -out ${USER_NAME}/${USER_NAME}.csr
-# openssl req -new -key ${KEY_PATH} -subj "/CN=system:node:${USER_NAME}/OU=system:nodes/O=system:nodes" -config ${USER_NAME}/${USER_NAME}_csr.cnf -nodes -out ${USER_NAME}/${USER_NAME}.csr
-
-openssl req -new -key ${KEY_PATH} -subj "/CN=${USER_NAME}" -config ${USER_NAME}/${USER_NAME}_csr.cnf -out ${USER_NAME}/${USER_NAME}.csr 
-
+openssl req -new -key ${KEY_PATH} -subj "/CN=${USER_NAME}/OU=${USER_DEPARTAMENT}" -config ${USER_NAME}/${USER_NAME}_csr.cnf -out ${USER_NAME}/${USER_NAME}.csr 
 
 # convert csr to base64
 export BASE64_CSR=$(cat ${USER_NAME}/${USER_NAME}.csr | base64 | tr -d '\n')
@@ -52,9 +47,10 @@ cat ${USER_NAME}/${USER_NAME}_csr.yaml | kubectl apply -f -
 echo "\nKubernetes CSR status: "
 kubectl get csr | grep ${USER_NAME}_csr
 
-# sign certificate
-echo "Sign.."
+# signing certificate
+echo "\nSigning.."
 kubectl certificate approve ${USER_NAME}_csr
+
 echo "\nKubernetes CSR status: "
 kubectl get csr | grep ${USER_NAME}_csr
 
@@ -71,8 +67,8 @@ export CLIENT_CERTIFICATE_DATA=$(kubectl get csr ${USER_NAME}_csr -o jsonpath={.
 export CLIENT_KEY_DATA=$(cat ${KEY_PATH} | base64 | tr -d '\n')
 
 # show client cert
-# echo $CLIENT_CERTIFICATE_DATA | base64 -d > tmp.crt
-# openssl x509 -noout -text -in tmp.crt 
+# echo $CLIENT_CERTIFICATE_DATA | base64 -d > ${USER_NAME}/${USER_NAME}.crt
+# openssl x509 -noout -text -in ${USER_NAME}/${USER_NAME}.crt 
 
 echo "\nGenerating user config..."
 j2 templates/config.j2 > ${USER_NAME}/config
