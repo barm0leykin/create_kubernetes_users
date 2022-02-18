@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # Prepare kubernetes config for new user
 #
@@ -16,54 +16,58 @@ export $(grep -v '^#' cluster.env | xargs -d '\n')
 export USER_NAME=$1
 export USER_DEPARTAMENT=$2
 export KEY_PATH=$3
+export USER_DIR="users/${USER_NAME}"
 
-mkdir -p ${USER_NAME}
+mkdir -p "${USER_DIR}"
 
 # gen key
 if [ -z "$3" ]
 then
     echo "KEY_PATH not set. Generating new user key..."
-    openssl genrsa -out ${USER_NAME}/${USER_NAME}.key 2048
-    export KEY_PATH=${USER_NAME}/${USER_NAME}.key
+    openssl genrsa -out "${USER_DIR}/${USER_NAME}".key 2048
+    export KEY_PATH="${USER_DIR}/${USER_NAME}.key"
 fi
 # gen csr config
 echo "\nGenerating CSR..."
-j2 templates/username_csr.cnf.j2 > ${USER_NAME}/${USER_NAME}_csr.cnf
+j2 templates/username_csr.cnf.j2 > "${USER_DIR}/${USER_NAME}_csr.cnf"
 
 # gen csr
-openssl req -new -key ${KEY_PATH} -subj "/CN=${USER_NAME}/OU=${USER_DEPARTAMENT}" -config ${USER_NAME}/${USER_NAME}_csr.cnf -out ${USER_NAME}/${USER_NAME}.csr 
+openssl req -new -key ${KEY_PATH} -subj "/CN=${USER_NAME}/OU=${USER_DEPARTAMENT}" -config ${USER_DIR}/${USER_NAME}_csr.cnf -out ${USER_DIR}/${USER_NAME}.csr 
 
 # convert csr to base64
-export BASE64_CSR=$(cat ${USER_NAME}/${USER_NAME}.csr | base64 | tr -d '\n')
+export BASE64_CSR=$(cat ${USER_DIR}/${USER_NAME}.csr | base64 | tr -d '\n')
 
 # create csr yaml manifest
-j2 templates/username_csr.yaml.j2 > ${USER_NAME}/${USER_NAME}_csr.yaml
+j2 templates/username_csr.yaml.j2 > "${USER_DIR}/${USER_NAME}_csr.yaml"
 
 # apply csr yaml manifest to kubernetes
 echo "\nApply csr yaml manifest to kubernetes..."
-cat ${USER_NAME}/${USER_NAME}_csr.yaml | kubectl apply -f -
+cat "${USER_DIR}/${USER_NAME}_csr.yaml" | kubectl apply -f -
 
 # show csr
 echo "\nKubernetes CSR status: "
-kubectl get csr | grep ${USER_NAME}_csr
+kubectl get csr | grep "${USER_NAME}_csr"
 
 # signing certificate
 echo "\nSigning.."
-kubectl certificate approve ${USER_NAME}_csr
+kubectl certificate approve "${USER_NAME}_csr"
 
 echo "\nKubernetes CSR status: "
-kubectl get csr | grep ${USER_NAME}_csr
+kubectl get csr | grep "${USER_NAME}_csr"
 
 # get ca certificate
+echo "get ca certificate.."
 export CERTIFICATE_AUTHORITY_DATA=$(kubectl config view --raw -o json | jq -r '.clusters[0].cluster."certificate-authority-data"' | tr -d '"')
 # way 2:
 # scp k8s-host:/etc/kubernetes/pki/ca.crt
 # export CERTIFICATE-AUTHORITY-DATA=$(cat ca.crt | base64 | tr -d '\n')
 
 # get signed client certificate
+echo "get signed client certificate.."
 export CLIENT_CERTIFICATE_DATA=$(kubectl get csr ${USER_NAME}_csr -o jsonpath={.status.certificate})
 
 # get client key
+echo "get client key.."
 export CLIENT_KEY_DATA=$(cat ${KEY_PATH} | base64 | tr -d '\n')
 
 # show client cert
@@ -71,6 +75,6 @@ export CLIENT_KEY_DATA=$(cat ${KEY_PATH} | base64 | tr -d '\n')
 # openssl x509 -noout -text -in ${USER_NAME}/${USER_NAME}.crt 
 
 echo "\nGenerating user config..."
-j2 templates/config.j2 > ${USER_NAME}/config
+j2 templates/config.j2 > "${USER_DIR}/config"
 
 echo "OK!"
