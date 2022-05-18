@@ -1,0 +1,39 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+ name: u-{{ USER_NAME }}-view
+subjects:
+- kind: User
+  name: {{ USER_NAME }}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+ kind: ClusterRole
+ name: view
+ apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ USER_NAME }}
+  namespace: u-{{ USER_NAME }}
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: u-{{ USER_NAME }}-rb
+ namespace: u-{{ USER_NAME }}
+subjects:
+- kind: User
+  name: {{ USER_NAME }}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+ kind: Role
+ name: {{ USER_NAME }}
+ apiGroup: rbac.authorization.k8s.io
