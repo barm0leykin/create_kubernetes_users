@@ -8,20 +8,29 @@
 if [ -z "$1" ] || [ -z "$2" ]
 then
     echo "Parameters needed!"
-    echo "USING:   ./prepare_user.sh USER_NAME USER_DEPARTAMENT [KEY_PATH]"
+    echo "USING:   ./prepare_user.sh USER_NAME USER_DEPARTAMENT [CLUSTER_ENV_FILE] [KEY_PATH]"
     exit 1
 fi
 
-export $(grep -v '^#' cluster.env | xargs -d '\n')
 export USER_NAME=$1
 export USER_DEPARTAMENT=$2
-export KEY_PATH=$3
-export USER_DIR="users/${USER_NAME}"
+# export CLUSTER_NAME=$3
+export KEY_PATH=$4
+
+if [ -z "$3" ]
+then
+    export $( grep -v '^#' cluster.env | xargs -d '\n' )
+else
+    export $(grep -v '^#' $3 | xargs -d '\n')
+fi
+echo CLUSTER_NAME: $CLUSTER_NAME
+
+export USER_DIR="${CLUSTER_NAME}/${USER_NAME}"
 
 mkdir -p "${USER_DIR}"
 
 # gen key
-if [ -z "$3" ]
+if [ -z "$4" ]
 then
     echo "KEY_PATH not set. Generating new user key..."
     openssl genrsa -out "${USER_DIR}/${USER_NAME}".key 2048
@@ -86,4 +95,4 @@ echo "\nBind view roles..."
 j2 templates/bind_default_roles.yaml.j2 > "${USER_DIR}/bind_default_roles.yaml"
 kubectl apply -f ${USER_DIR}/bind_default_roles.yaml
 
-echo "OK!"
+echo "\nComplete! User config file: ${USER_DIR}/config"

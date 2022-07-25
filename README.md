@@ -30,7 +30,7 @@
 Пример:
 
 ```bash
-./prepare_user.sh geytsbills management
+./prepare_user.sh geytsbill management
 
 
 KEY_PATH not set. Generating new user key...
