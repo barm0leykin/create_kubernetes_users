@@ -25,7 +25,7 @@ else
 fi
 echo CLUSTER_NAME: $CLUSTER_NAME
 
-export USER_DIR="${CLUSTER_NAME}/${USER_NAME}"
+export USER_DIR="users/${CLUSTER_NAME}/${USER_NAME}"
 
 mkdir -p "${USER_DIR}"
 
@@ -86,13 +86,15 @@ export CLIENT_KEY_DATA=$(cat ${KEY_PATH} | base64 | tr -d '\n')
 echo "\nGenerating user config..."
 j2 templates/config.j2 > "${USER_DIR}/config"
 
-# create personal namespace
-j2 templates/personal_namespace.yaml.j2 > "${USER_DIR}/personal_namespace.yaml"
-kubectl apply -f ${USER_DIR}/personal_namespace.yaml
+if [[ -z "$MAKE_DEFAULT_CONFIGS" ]]; then
+    # create personal namespace
+    j2 templates/personal_namespace.yaml.j2 > "${USER_DIR}/personal_namespace.yaml"
+    kubectl apply -f ${USER_DIR}/personal_namespace.yaml
 
-# bind default roles
-echo "\nBind view roles..."
-j2 templates/bind_default_roles.yaml.j2 > "${USER_DIR}/bind_default_roles.yaml"
-kubectl apply -f ${USER_DIR}/bind_default_roles.yaml
+    # bind default roles
+    echo "\nBind view roles..."
+    j2 templates/bind_default_roles.yaml.j2 > "${USER_DIR}/bind_default_roles.yaml"
+    kubectl apply -f ${USER_DIR}/bind_default_roles.yaml
+fi
 
 echo "\nComplete! User config file: ${USER_DIR}/config"

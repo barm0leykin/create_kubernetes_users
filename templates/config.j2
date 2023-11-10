@@ -12,13 +12,13 @@ clusters:
 contexts:
 - context:
     cluster: {{ CLUSTER_NAME }}
-    user: {{ USER_NAME }}
+    user: {{ USER_NAME }}@{{ CLUSTER_NAME }}
   name: {{ USER_NAME }}@{{ CLUSTER_NAME }}
 
 current-context: {{ USER_NAME }}@{{ CLUSTER_NAME }}
 
 users:
-- name: {{ USER_NAME }}
+- name: {{ USER_NAME }}@{{ CLUSTER_NAME }}
   user:
     client-certificate-data: {{ CLIENT_CERTIFICATE_DATA }}
     client-key-data: {{ CLIENT_KEY_DATA }}
