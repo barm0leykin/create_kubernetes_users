@@ -13,6 +13,9 @@ contexts:
 - context:
     cluster: {{ CLUSTER_NAME }}
     user: {{ USER_NAME }}@{{ CLUSTER_NAME }}
+    {% if DEFAULT_NAMESPACE is defined %}
+    namespace: {{ DEFAULT_NAMESPACE}}
+    {% endif %}
   name: {{ USER_NAME }}@{{ CLUSTER_NAME }}
 
 current-context: {{ USER_NAME }}@{{ CLUSTER_NAME }}

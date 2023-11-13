@@ -19,6 +19,7 @@ export KEY_PATH=$4
 
 if [ -z "$3" ]
 then
+    # get env from CLUSTER_ENV_FILE
     export $( grep -v '^#' cluster.env | xargs -d '\n' )
 else
     export $(grep -v '^#' $3 | xargs -d '\n')
@@ -80,7 +81,7 @@ echo "get client key.."
 export CLIENT_KEY_DATA=$(cat ${KEY_PATH} | base64 | tr -d '\n')
 
 # show client cert
-# echo $CLIENT_CERTIFICATE_DATA | base64 -d > ${USER_NAME}/${USER_NAME}.crt
+echo $CLIENT_CERTIFICATE_DATA | base64 -d > ${USER_DIR}/${USER_NAME}.crt
 # openssl x509 -noout -text -in ${USER_NAME}/${USER_NAME}.crt
 
 echo "\nGenerating user config..."
@@ -88,8 +89,8 @@ j2 templates/config.j2 > "${USER_DIR}/config"
 
 if [[ -z "$MAKE_DEFAULT_CONFIGS" ]]; then
     # create personal namespace
-    j2 templates/personal_namespace.yaml.j2 > "${USER_DIR}/personal_namespace.yaml"
-    kubectl apply -f ${USER_DIR}/personal_namespace.yaml
+    # j2 templates/personal_namespace.yaml.j2 > "${USER_DIR}/personal_namespace.yaml"
+    # kubectl apply -f ${USER_DIR}/personal_namespace.yaml
 
     # bind default roles
     echo "\nBind view roles..."
