@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 # Prepare kubernetes config for new user
 #
@@ -87,7 +87,7 @@ echo $CLIENT_CERTIFICATE_DATA | base64 -d > ${USER_DIR}/${USER_NAME}.crt
 echo "\nGenerating user config..."
 j2 templates/config.j2 > "${USER_DIR}/config"
 
-if [[ -z "$MAKE_DEFAULT_CONFIGS" ]]; then
+if [[ ! -z "$MAKE_DEFAULT_CONFIGS" ]]; then
     # create personal namespace
     # j2 templates/personal_namespace.yaml.j2 > "${USER_DIR}/personal_namespace.yaml"
     # kubectl apply -f ${USER_DIR}/personal_namespace.yaml
